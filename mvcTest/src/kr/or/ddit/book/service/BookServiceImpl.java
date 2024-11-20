@@ -9,8 +9,17 @@ import kr.or.ddit.book.vo.BookVO;
 public class BookServiceImpl implements IBookService {
 	private IBookDao dao;
 	
-	public BookServiceImpl() {
+	//1번
+	private static BookServiceImpl service;
+	
+	//2번
+	private BookServiceImpl() {
 		dao = BookDaoImpl.getInstance(); //DAO객체 생성
+	}
+	//3번
+	public static BookServiceImpl getInstance() {
+		if(service == null) service = new BookServiceImpl();
+		return service;
 	}
 	
 	

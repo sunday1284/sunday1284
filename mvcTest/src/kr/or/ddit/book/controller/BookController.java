@@ -13,7 +13,8 @@ public class BookController {
 	private Scanner scan;
 
 	public BookController() {
-		service = new BookServiceImpl(); // Service 객체 생성
+//		service = new BookServiceImpl(); // Service 객체 생성
+		service = BookServiceImpl.getInstance();
 		scan = new Scanner(System.in);
 	}
 
