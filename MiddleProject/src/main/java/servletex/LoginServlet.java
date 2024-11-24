@@ -12,7 +12,7 @@ public class LoginServlet extends HttpServlet{
 	public void init() throws ServletException {
 		System.out.println("로그인 서블릿 초기화");
 	}
-	
+//	asd
 	@Override
 	public void destroy() {
 		System.out.println("로그인 서블릿 소멸");
