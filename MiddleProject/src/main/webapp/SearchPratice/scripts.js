@@ -64,7 +64,7 @@ $(document).ready(function() {
                 var results = data.filter(function(item) {
                     return item.name.toLowerCase().includes(searchQuery);
                 });
-
+				
                 if (results.length > 0) {
                     // 첫 번째 결과의 URL로 이동
                     window.location.href = results[0].url;
@@ -72,6 +72,7 @@ $(document).ready(function() {
                     alert('검색 결과가 없습니다.');
                 }
             },
+			
             error: function(xhr, status, error) {
                 console.error('Error fetching travel data:', error);
             }
