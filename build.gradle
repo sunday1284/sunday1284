@@ -1,0 +1,76 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'junit:junit:4.13.2'
+	implementation 'org.springframework:spring-test'
+
+	implementation 'org.json:json:20220320'
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'	/* javax.xml.bind */
+	implementation 'com.google.code.gson:gson'	/* HttpUtil, JsonUtil */
+	implementation 'org.apache.httpcomponents:httpclient:4.5.13' /* HttpClientConfiguration */
+	implementation 'commons-io:commons-io:2.11.0'	/* FileStorageService */
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis' /* RedisConfiguration */
+//	implementation 'it.ozimov:embedded-redis:0.7.2' /* EmbeddedRedisConfiguration */
+
+	// <<< h2-console
+	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'mysql:mysql-connector-java'
+	// >>> h2-console
+
+	// <<< spring.database.url 설정 필요. compileOnly 로 하면 배포시 문제됨
+	implementation 'mysql:mysql-connector-java:8.0.32'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.0'    /* MyBatis */
+	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'  /* MyBatis 쿼리 로그 출력 */
+	implementation("org.mariadb.jdbc:mariadb-java-client:3.1.2")
+	// >>> spring.database.url 설정 필요
+
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'		/* JwtTokenProvider : WebSocket */
+	implementation 'net.rakugakibox.util:yaml-resource-bundle:1.2' /* MessageConfiguration : 한글화 */
+
+	// <<< lombok : 컴파일시 @Slf4j 나 log  에러가 발생할 경우
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	// >>> lombok
+
+	// <<< swagger
+//	implementation 'org.springframework.boot:spring-boot-starter-validation'
+//	implementation 'io.springfox:springfox-boot-starter:3.0.0'
+//	implementation 'io.springfox:springfox-swagger-ui:3.0.0'
+	implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+	// >>> swagger
+
+	// https://mvnrepository.com/artifact/commons-fileupload/commons-fileupload
+	implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.4'
+
+	// 컴파일 시 'javax.annotation.meta.When' 경고 제거
+	implementation 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

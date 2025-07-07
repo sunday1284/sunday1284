@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server-Sent Events 예제</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .right-panel {
+            flex: 1;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        input, button, select {
+            margin: 5px 0;
+            padding: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #eventLog {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .event {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .event.connect { color: #4CAF50; }
+        .event.disconnect { color: #f44336; }
+        .event.message { color: #2196F3; }
+        .event.broadcast { color: #9C27B0; }
+        .event.heartbeat { color: #9E9E9E; font-style: italic; }
+        .event.system-info { color: #FF9800; }
+        .event.system-warning { color: #FF5722; font-weight: bold; }
+        .event.system-error { color: #F44336; font-weight: bold; }
+        .status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .connected { color: green; }
+        .disconnected { color: red; }
+    </style>
+</head>
+<body>
+<h1>SSE (Server-Sent Events) 예제</h1>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="card">
+            <h2>연결 관리</h2>
+            <div class="status" id="connectionStatus">상태: <span class="disconnected">연결 안됨</span></div>
+
+            <input type="text" id="userId" placeholder="사용자 ID 입력" value="user1">
+            <div>
+                <button id="connectBtn">연결</button>
+                <button id="disconnectBtn" disabled>연결 해제</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>메시지 전송</h2>
+            <select id="messageType">
+                <option value="user">특정 사용자에게</option>
+                <option value="broadcast">모든 사용자에게</option>
+            </select>
+            <div id="userIdContainer">
+                <input type="text" id="targetUserId" placeholder="대상 사용자 ID">
+            </div>
+            <textarea id="messageInput" placeholder="메시지 내용" rows="3" style="width: 100%"></textarea>
+            <button id="sendBtn">메시지 전송</button>
+        </div>
+
+        <div class="card">
+            <h2>시스템 이벤트 시뮬레이션</h2>
+            <select id="eventType">
+                <option value="info">정보</option>
+                <option value="warning">경고</option>
+                <option value="error">오류</option>
+            </select>
+            <input type="text" id="eventMessage" placeholder="이벤트 메시지" value="테스트 시스템 이벤트입니다">
+            <button id="triggerEventBtn">이벤트 발생</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="card">
+            <h2>이벤트 로그</h2>
+            <button id="clearLogBtn">로그 지우기</button>
+            <div id="eventLog"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DOM 요소
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const triggerEventBtn = document.getElementById('triggerEventBtn');
+    const clearLogBtn = document.getElementById('clearLogBtn');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const messageType = document.getElementById('messageType');
+    const userIdContainer = document.getElementById('userIdContainer');
+    const eventLog = document.getElementById('eventLog');
+
+    // 이벤트 소스 변수
+    let eventSource = null;
+
+    // 연결 버튼 클릭 이벤트
+    connectBtn.addEventListener('click', function() {
+        const userId = document.getElementById('userId').value.trim();
+        if (!userId) {
+            alert('사용자 ID를 입력하세요');
+            return;
+        }
+
+        // 기존 연결이 있으면 닫기
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        // 새 연결 생성
+        eventSource = new EventSource(`/sse/connect/${userId}`);
+
+        // 연결 상태 업데이트
+        connectionStatus.innerHTML = `상태: <span class="connected">연결됨 (${userId})</span>`;
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+
+        // 기본 메시지 이벤트 핸들러
+        eventSource.onmessage = function(event) {
+            addEventToLog('default', event.data);
+        };
+
+        // 연결 이벤트
+        eventSource.addEventListener('connect', function(event) {
+            addEventToLog('connect', event.data);
+        });
+
+        // 메시지 이벤트
+        eventSource.addEventListener('message', function(event) {
+            addEventToLog('message', event.data);
+        });
+
+        // 브로드캐스트 이벤트
+        eventSource.addEventListener('broadcast', function(event) {
+            addEventToLog('broadcast', event.data);
+        });
+
+        // 하트비트 이벤트
+        eventSource.addEventListener('heartbeat', function(event) {
+            addEventToLog('heartbeat', event.data);
+        });
+
+        // 시스템 이벤트 핸들러들
+        eventSource.addEventListener('system-info', function(event) {
+            addEventToLog('system-info', event.data);
+        });
+
+        eventSource.addEventListener('system-warning', function(event) {
+            addEventToLog('system-warning', event.data);
+        });
+
+        eventSource.addEventListener('system-error', function(event) {
+            addEventToLog('system-error', event.data);
+        });
+
+        // 에러 처리
+        eventSource.onerror = function(error) {
+            addEventToLog('error', '연결 오류가 발생했습니다');
+            eventSource.close();
+            connectionStatus.innerHTML = '상태: <span class="disconnected">연결 끊김</span>';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+        };
+    });
+
+    // 연결 해제 버튼 클릭 이벤트
+    disconnectBtn.addEventListener('click', function() {
+        const userId = document.getElementById('userId').value.trim();
+        if (!userId) return;
+
+        fetch(`/sse/disconnect/${userId}`, {
+            method: 'POST'
+        })
+            .then(response => response.text())
+            .then(data => {
+                addEventToLog('disconnect', data);
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                connectionStatus.innerHTML = '상태: <span class="disconnected">연결 안됨</span>';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addEventToLog('error', '연결 해제 중 오류 발생: ' + error);
+            });
+    });
+
+    // 메시지 종류 변경 이벤트
+    messageType.addEventListener('change', function() {
+        userIdContainer.style.display = this.value === 'user' ? 'block' : 'none';
+    });
+
+    // 메시지 전송 버튼 클릭 이벤트
+    sendBtn.addEventListener('click', function() {
+        const message = document.getElementById('messageInput').value.trim();
+        if (!message) {
+            alert('메시지를 입력하세요');
+            return;
+        }
+
+        const type = messageType.value;
+        let url = '';
+
+        if (type === 'user') {
+            const targetUserId = document.getElementById('targetUserId').value.trim();
+            if (!targetUserId) {
+                alert('대상 사용자 ID를 입력하세요');
+                return;
+            }
+            url = `/sse/send/${targetUserId}`;
+        } else {
+            url = '/sse/broadcast';
+        }
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        })
+            .then(response => response.text())
+            .then(data => {
+                addEventToLog('info', '전송 결과: ' + data);
+                document.getElementById('messageInput').value = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addEventToLog('error', '메시지 전송 중 오류 발생: ' + error);
+            });
+    });
+
+    // 시스템 이벤트 트리거 버튼 클릭 이벤트
+    triggerEventBtn.addEventListener('click', function() {
+        const eventType = document.getElementById('eventType').value;
+        const message = document.getElementById('eventMessage').value.trim();
+
+        if (!message) {
+            alert('이벤트 메시지를 입력하세요');
+            return;
+        }
+
+        fetch('/sse/system-event', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                eventType: eventType,
+                message: message
+            })
+        })
+            .then(response => response.text())
+            .then(data => {
+                addEventToLog('info', '시스템 이벤트 결과: ' + data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addEventToLog('error', '시스템 이벤트 발생 중 오류: ' + error);
+            });
+    });
+
+    // 로그 지우기 버튼 클릭 이벤트
+    clearLogBtn.addEventListener('click', function() {
+        eventLog.innerHTML = '';
+    });
+
+    // 이벤트 로그에 추가하는 함수
+    function addEventToLog(type, message) {
+        const event = document.createElement('div');
+        event.className = `event ${type}`;
+        event.textContent = `[${new Date().toLocaleTimeString()}] ${type}: ${message}`;
+        eventLog.appendChild(event);
+        eventLog.scrollTop = eventLog.scrollHeight;
+    }
+
+    // 초기 설정
+    userIdContainer.style.display = messageType.value === 'user' ? 'block' : 'none';
+</script>
+</body>
+</html>

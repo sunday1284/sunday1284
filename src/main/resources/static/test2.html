@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE 테스트</title>
+</head>
+<body>
+<h1>서버 이벤트 수신</h1>
+<ul id="events"></ul>
+
+<script>
+    const httpUrl = "http://127.0.0.1:8020"
+
+    const evtSource = new EventSource(httpUrl + "/sse/gwStatus");
+    const eventsList = document.getElementById("events");
+
+    // 기본 메시지 이벤트
+    evtSource.onmessage = function(event) {
+        const newElement = document.createElement("li");
+        newElement.textContent = "기본 메시지: " + event.data;
+        eventsList.appendChild(newElement);
+    };
+
+    // connect 이벤트
+    evtSource.addEventListener("connect", function(event) {
+        const newElement = document.createElement("li");
+        newElement.textContent = "연결 이벤트: " + event.data;
+        eventsList.appendChild(newElement);
+    });
+
+    // message 이벤트
+    evtSource.addEventListener("message", function(event) {
+        const newElement = document.createElement("li");
+        newElement.textContent = "메시지 이벤트: " + event.data;
+        eventsList.appendChild(newElement);
+    });
+
+    // ping 이벤트
+    evtSource.addEventListener("heartbeat", function(event) {
+        const newElement = document.createElement("li");
+        newElement.textContent = "heartbeat 이벤트: " + event.data;
+        eventsList.appendChild(newElement);
+    });
+
+    // 에러 처리
+    evtSource.onerror = function() {
+        console.error("EventSource 에러 발생");
+        const newElement = document.createElement("li");
+        newElement.textContent = "연결 에러 발생";
+        eventsList.appendChild(newElement);
+    };
+</script>
+</body>
+</html>
