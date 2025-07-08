@@ -27,20 +27,6 @@ public class SseController {
         this.sseService = sseService;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(SseController.class);
-
-    // 사용자 ID와 SSE 연결을 매핑하는 맵
-    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-
-    // 하트비트 관리를 위한 스레드 풀
-    private final ExecutorService heartbeatExecutor = Executors.newCachedThreadPool();
-
-    // 하트비트 간격 (밀리초)
-    private static final long HEARTBEAT_INTERVAL = 15000; // 15초
-
-    // 연결 타임아웃 (밀리초)
-    private static final long TIMEOUT = 3600000L; // 1시간
-
     // SSE 연결 생성
     @GetMapping("/gwStatus")
     public SseEmitter gwStatus() {
@@ -104,20 +90,4 @@ public class SseController {
         return ResponseEntity.ok("시스템 이벤트가 " + successCount + "명의 사용자에게 전송되었습니다.");
     }
 
-//    // 애플리케이션 종료 시 리소스 정리
-//    @PreDestroy
-//    public void cleanup() {
-//        logger.info("애플리케이션 종료 - 모든 SSE 연결 및 리소스 정리");
-//        heartbeatExecutor.shutdown();
-//
-//        // 모든 연결 종료
-//        for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
-//            try {
-//                entry.getValue().complete();
-//            } catch (Exception e) {
-//                logger.warn("연결 종료 중 오류: {}", e.getMessage());
-//            }
-//        }
-//        emitters.clear();
-//    }
 }
