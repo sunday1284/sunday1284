@@ -53,48 +53,6 @@ public class SseController {
         return sseService.createEmitter(userId);
     }
 
-    // 하트비트 처리를 별도 메서드로 분리
-    private void startHeartbeat(String userId, SseEmitter emitter) {
-        AtomicInteger heartbeatCount = new AtomicInteger(0);
-
-        heartbeatExecutor.execute(() -> {
-            while (emitters.containsKey(userId) && emitters.get(userId) == emitter) {
-                try {
-                    Thread.sleep(HEARTBEAT_INTERVAL);
-
-                    // 사용자가 아직 연결되어 있는지 확인
-                    if (emitters.containsKey(userId) && emitters.get(userId) == emitter) {
-                        try {
-                            int count = heartbeatCount.incrementAndGet();
-                            emitter.send(SseEmitter.event()
-                                    .id("heartbeat-" + count)
-                                    .name("heartbeat")
-                                    .data("ping"));
-
-                            logger.debug("하트비트 전송: {} (count: {})", userId, count);
-                        } catch (IOException e) {
-                            // 연결 중단 시 조용히 처리
-                            logger.debug("하트비트 전송 실패 (연결 종료): {}", userId);
-                            emitters.remove(userId);
-                            break;
-                        }
-                    } else {
-                        logger.debug("사용자 연결 종료로 하트비트 중단: {}", userId);
-                        break;
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logger.warn("하트비트 스레드 중단: {}", userId);
-                    break;
-                } catch (Exception e) {
-                    logger.warn("하트비트 처리 중 예외 발생: {} - {}", userId, e.getMessage());
-                    emitters.remove(userId);
-                    break;
-                }
-            }
-        });
-    }
-
     // 연결 해제
     @PostMapping("/disconnect/{userId}")
     public ResponseEntity<String> disconnect(@PathVariable String userId) {
