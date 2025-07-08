@@ -50,7 +50,7 @@ public class SseController {
     // SSE 연결 생성
     @GetMapping("/connect/{userId}")
     public SseEmitter connect(@PathVariable String userId) {
-       return sseService.createEmitter(userId);
+        return sseService.createEmitter(userId);
     }
 
     // 하트비트 처리를 별도 메서드로 분리
