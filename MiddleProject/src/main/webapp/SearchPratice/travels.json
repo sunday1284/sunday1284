@@ -1,0 +1,20 @@
+[
+    {
+        "name": "경복궁",
+        "location": "서울",
+        "description": "한국의 대표적인 궁궐 중 하나로, 조선 왕조의 역사가 담겨있습니다.",
+        "url": "https://place.map.kakao.com/18619553"
+    },
+    {
+        "name": "한라산",
+        "location": "제주도",
+        "description": "대한민국에서 가장 높은 산으로, 아름다운 자연 경관을 자랑합니다.",
+        "url": "https://place.map.kakao.com/15174204"
+    },
+    {
+        "name": "해운대 해수욕장",
+        "location": "부산",
+        "description": "부산의 대표적인 해수욕장으로, 여름철 많은 관광객이 찾는 곳입니다.",
+        "url": "https://place.map.kakao.com/7913306"
+    }
+]
